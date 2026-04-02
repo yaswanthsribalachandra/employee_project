@@ -1,0 +1,124 @@
+/* Form container */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  font-family: Arial, sans-serif;
+}
+
+/* Heading */
+form h3 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Input fields */
+form input {
+  padding: 12px;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+/* Focus effect */
+form input:focus {
+  border-color: #3498db;
+  background-color: #fff;
+  box-shadow: 0 0 6px rgba(52, 152, 219, 0.3);
+}
+
+/* Placeholder */
+form input::placeholder {
+  color: #999;
+  font-size: 13px;
+}
+
+/* Button base */
+.update-btn {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Add mode (default blue) */
+.update-btn.add {
+  background: linear-gradient(135deg, #3498db, #21618c);
+}
+
+/* Edit mode (green) */
+.update-btn.edit {
+  background: linear-gradient(135deg, #27ae60, #1e8449);
+}
+/* Base button */
+.update-btn {
+  margin-top: 10px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* 🔵 Add Mode */
+.update-btn.add {
+  background: linear-gradient(135deg, #00c853, #009624);
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+}
+
+/* 🟢 Update Mode */
+.update-btn.edit {
+  background: linear-gradient(135deg, #3498db, #21618c);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* Hover */
+.update-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+/* Click */
+.update-btn:active {
+  transform: scale(0.97);
+}
+
+/* Hover */
+.update-btn:hover {
+  transform: scale(1.05);
+  opacity: 0.95;
+}
+
+/* Active click */
+.update-btn:active {
+  transform: scale(0.97);
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  form {
+    gap: 10px;
+  }
+
+  form input {
+    padding: 10px;
+  }
+
+  .update-btn {
+    padding: 10px;
+  }
+}
