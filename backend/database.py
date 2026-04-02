@@ -2,7 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from schemas import Employee
 
-MONGO_URL = "mongodb+srv://yaswanth:yaswanth12345@cluster1.sxnfzju.mongodb.net/Employees?retryWrites=true&w=majority"
+MONGO_URL = "mongodb+srv://yaswanth:<password>@cluster1.sxnfzju.mongodb.net/Employees?retryWrites=true&w=majority"
 
 client = AsyncIOMotorClient(MONGO_URL)
 
