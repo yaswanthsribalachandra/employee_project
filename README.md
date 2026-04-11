@@ -124,20 +124,7 @@ Feel free to fork the repo and submit a pull request.
 
 ---
 
-##  License
-
-This project is licensed under the MIT License.
-
----
 
 ##  Author
+LinkedIn: https://www.linkedin.com/in/dasari-yaswanth-sri-balachandra/
 
-Your Name  
-GitHub: https://github.com/your-username  
-LinkedIn: https://linkedin.com/in/your-profile  
-
----
-
-##  Support
-
-If you found this project helpful, give it a star on GitHub!
