@@ -7,8 +7,6 @@ import os
 
 load_dotenv()
 MONGO_URL = os.getenv("MONGO_URI")
-MONGO_URL="mongodb+srv://yaswanth:yaswanth12345@cluster1.sxnfzju.mongodb.net/Employees"
-
 client = AsyncIOMotorClient(MONGO_URL)
 
 async def init_db():
