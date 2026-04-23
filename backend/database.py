@@ -1,8 +1,12 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from schemas import Employee
+from dotenv import load_dotenv
+import os
 
-MONGO_URL = "mongodb+srv://yaswanth:<password>@cluster1.sxnfzju.mongodb.net/Employees?retryWrites=true&w=majority"
+
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URI")
 
 client = AsyncIOMotorClient(MONGO_URL)
 
