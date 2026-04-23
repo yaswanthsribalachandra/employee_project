@@ -26,6 +26,7 @@
   color: #333;
 }
 
+
 /* Inputs */
 .signin-form input {
   padding: 10px;
@@ -62,4 +63,13 @@
   text-align: center;
   font-size: 14px;
   margin-top: 5px;
+}
+
+.signup-btn {
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  color: blue;
+  cursor: pointer;
+  text-align: center;
 }

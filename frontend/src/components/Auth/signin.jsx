@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import "./Signin.css";
+import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "http://127.0.0.1:8000";
 
 function Signin() {
+  const navigate = useNavigate();   // ✅ correct place
+
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(""); // ✅ moved up
 
   // Handle input change
   const handleChange = (e) => {
@@ -38,11 +41,9 @@ function Signin() {
         setMessage("✅ Login successful!");
         console.log(data);
 
-        // 👉 Optional: store token
-        // localStorage.setItem("token", data.token);
-
+        navigate("/home");   // ✅ redirect works now
       } else {
-        setMessage("❌ Invalid credentials");
+        setMessage(data.detail || "❌ Invalid credentials");
       }
     } catch (error) {
       console.error(error);
@@ -74,6 +75,14 @@ function Signin() {
         />
 
         <button type="submit">Login</button>
+
+        <button
+          type="button"
+          className="signup-btn"
+          onClick={() => navigate("/")}
+        >
+          Don't have an account? Sign Up
+        </button>
 
         {message && <p className="message">{message}</p>}
       </form>

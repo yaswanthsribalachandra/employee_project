@@ -61,6 +61,7 @@ tr:hover {
   transform: scale(0.97);
   box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);
 }
+
 /* Buttons */
 .edit-btn {
   background-color: #27ae60;

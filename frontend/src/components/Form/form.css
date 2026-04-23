@@ -91,6 +91,11 @@ form input::placeholder {
   transform: translateY(-2px);
   opacity: 0.95;
 }
+.error {
+  color: red;
+  font-size: 12px;
+  margin: 0;
+}
 
 /* Click */
 .update-btn:active {
