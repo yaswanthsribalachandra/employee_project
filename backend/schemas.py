@@ -13,3 +13,10 @@ class Employee(Document):
 
     class Settings:
         name = "employee"
+
+class User(Document):
+    username: str | None = None
+    password: str | None = None
+
+    class Settings:
+        name = "User"

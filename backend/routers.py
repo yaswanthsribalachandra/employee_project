@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from schemas import Employee
+from schemas import Employee,User
 from typing import List
+from fastapi import HTTPException
 
 router = APIRouter()
 
@@ -50,3 +51,42 @@ async def delete_employee(empid: int):
     await employee.delete()
 
     return {"message": "Employee deleted successfully"}
+
+@router.post("/create_user")
+async def create_user(user: User):
+
+    if not user.username or not user.password:
+        raise HTTPException(status_code=400, detail="Missing fields")
+
+    existing_user = await User.find_one(User.username == user.username)
+
+    if existing_user:
+        raise HTTPException(status_code=409, detail="User already exists")
+
+    await user.insert()
+    return {"message": "User created"}
+
+@router.post("/signin")
+async def signin(user: User):
+
+    # 🔍 Find user in DB
+    existing_user = await User.find_one(User.username == user.username)
+
+    if not existing_user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    # 🔐 Compare plain password
+    if user.password != existing_user.password:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
+        )
+
+    # ✅ Success
+    return {
+        "message": "Login successful",
+        "username": existing_user.username
+    }

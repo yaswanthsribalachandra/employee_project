@@ -3,7 +3,6 @@ import Form from "../form/form.jsx";
 import "./Employee.css";
 import api from "../../services/api";
 
-
 const BASE_URL = api.defaults.baseURL;
 
 function EmployeeDetails() {
