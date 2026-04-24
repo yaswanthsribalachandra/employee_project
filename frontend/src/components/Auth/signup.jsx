@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import api from "../../services/api";
+
+const BASE_URL = api.defaults.baseURL;
 
 export default function Signup() {
   const [username, setUsername] = useState("");
@@ -15,7 +18,7 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/createuser", {
+      const response = await fetch(`${BASE_URL}/createuser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,10 +31,9 @@ export default function Signup() {
       if (response.ok) {
         alert("Signup successful!");
 
-        // 🔁 Redirect to Sign In page
-        window.location.href = "/signin";  // or use react-router
+        window.location.href = "/signin";  
       } else {
-        alert(data.detail);  // 👈 shows "User already exists"
+        alert(data.detail);  
       }
 
     } catch (error) {

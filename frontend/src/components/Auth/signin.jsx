@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import "./Signin.css";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = api.defaults.baseURL;
 
 function Signin() {
   const navigate = useNavigate();   // ✅ correct place

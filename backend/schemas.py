@@ -16,7 +16,9 @@ class Employee(Document):
 
 class User(Document):
     username: str | None = None
+    role: str | None = None
     password: str | None = None
+    
 
     class Settings:
         name = "User"
