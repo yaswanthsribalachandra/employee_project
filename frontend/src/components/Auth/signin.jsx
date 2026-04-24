@@ -6,16 +6,16 @@ import api from "../../services/api";
 const BASE_URL = api.defaults.baseURL;
 
 function Signin() {
-  const navigate = useNavigate();   // ✅ correct place
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
 
-  const [message, setMessage] = useState(""); // ✅ moved up
+  const [message, setMessage] = useState("");
 
-  // Handle input change
+  // Handle input
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -38,14 +38,32 @@ function Signin() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        setMessage("✅ Login successful!");
-        console.log(data);
+      //console.log("LOGIN RESPONSE:", data); // 🔍 DEBUG
 
-        navigate("/home");   // ✅ redirect works now
+      if (res.ok) {
+        if (!data.role) {
+          setMessage("Role not received from server");
+          return;
+        }
+
+        // Store role
+        const role = data.role.toLowerCase().trim();
+        localStorage.setItem("role", role);
+
+        // optional token
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+
+        setMessage("Login successful!");
+
+        // Redirect ONLY (no reload)
+        navigate("/home");
+
       } else {
-        setMessage(data.detail || "❌ Invalid credentials");
+        setMessage(data.detail || "Invalid credentials");
       }
+
     } catch (error) {
       console.error(error);
       setMessage("⚠️ Server error");

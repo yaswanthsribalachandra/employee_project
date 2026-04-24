@@ -9,8 +9,35 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  //Password validation checks
+  const checks = {
+    length: password.length >= 6,
+    uppercase: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+
+  const allValid = Object.values(checks).every(Boolean);
+
+  //Strength calculation
+  const strengthScore = Object.values(checks).filter(Boolean).length;
+
+  const getStrength = () => {
+    if (strengthScore <= 1) return { text: "Weak", color: "red" };
+    if (strengthScore === 2 || strengthScore === 3)
+      return { text: "Medium", color: "orange" };
+    if (strengthScore === 4) return { text: "Strong", color: "green" };
+  };
+
+  const strength = getStrength();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!allValid) {
+      alert("Password does not meet requirements!");
+      return;
+    }
 
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
@@ -30,12 +57,10 @@ export default function Signup() {
 
       if (response.ok) {
         alert("Signup successful!");
-
-        window.location.href = "/signin";  
+        window.location.href = "/signin";
       } else {
-        alert(data.detail);  
+        alert(data.detail);
       }
-
     } catch (error) {
       console.error(error);
       alert("Server error!");
@@ -73,27 +98,48 @@ export default function Signup() {
           </span>
         </div>
 
-        <div style={styles.passwordContainer}>
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            style={styles.input}
-            required
-          />
-        </div>
+        {/*Strength Indicator */}
+        {password && (
+          <div style={{ color: strength.color }}>
+            Strength: {strength.text}
+          </div>
+        )}
+
+        {/* Rules */}
+        <ul style={styles.rules}>
+          <li style={{ color: checks.length ? "green" : "red" }}>
+            Minimum 6 characters
+          </li>
+          <li style={{ color: checks.uppercase ? "green" : "red" }}>
+            At least 1 uppercase letter
+          </li>
+          <li style={{ color: checks.number ? "green" : "red" }}>
+            At least 1 number
+          </li>
+          <li style={{ color: checks.special ? "green" : "red" }}>
+            At least 1 special character
+          </li>
+        </ul>
+
+        <input
+          type={showPassword ? "text" : "password"}
+          placeholder="Confirm Password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          style={styles.input}
+          required
+        />
 
         <button type="submit" style={styles.button}>
           Register
         </button>
-        {/* 🔽 NEW SIGNIN BUTTON */}
+
         <button
-        type="button"
-        style={styles.linkButton}
-        onClick={() => (window.location.href = "/signin")}
+          type="button"
+          style={styles.linkButton}
+          onClick={() => (window.location.href = "/signin")}
         >
-        Already have an account? Sign In
+          Already have an account? Sign In
         </button>
       </form>
     </div>
@@ -116,19 +162,9 @@ const styles = {
     width: "300px",
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
+    gap: "10px",
   },
-  linkButton: {
-  background: "transparent",
-  border: "none",
-  color: "#007bff",
-  cursor: "pointer",
-  textAlign: "center",
-  marginTop: "10px",
-},
-  title: {
-    textAlign: "center",
-  },
+  title: { textAlign: "center" },
   input: {
     padding: "10px",
     borderRadius: "5px",
@@ -145,6 +181,11 @@ const styles = {
     right: "10px",
     cursor: "pointer",
   },
+  rules: {
+    fontSize: "12px",
+    margin: 0,
+    paddingLeft: "15px",
+  },
   button: {
     padding: "10px",
     background: "#007bff",
@@ -152,5 +193,12 @@ const styles = {
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
+  },
+  linkButton: {
+    background: "transparent",
+    border: "none",
+    color: "#007bff",
+    cursor: "pointer",
+    textAlign: "center",
   },
 };

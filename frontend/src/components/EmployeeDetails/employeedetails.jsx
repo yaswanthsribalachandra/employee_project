@@ -10,7 +10,16 @@ function EmployeeDetails() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
+  //  ROLE STATE (important)
+  const [role, setRole] = useState("");
 
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role");
+    setRole(storedRole ? storedRole.toLowerCase() : "");
+    /*console.log("ROLE:", storedRole); // 🔍 debug*/
+  }, []);
+
+  // Fetch employees
   const fetchEmployees = async () => {
     try {
       const res = await fetch(`${BASE_URL}/employees`);
@@ -25,12 +34,16 @@ function EmployeeDetails() {
     fetchEmployees();
   }, []);
 
-
+  // DELETE (frontend control only)
   const handleDelete = async (empid) => {
+    if (role !== "admin") {
+      alert("Only admin can delete!");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this employee?"
     );
-
     if (!confirmDelete) return;
 
     try {
@@ -38,34 +51,33 @@ function EmployeeDetails() {
         method: "DELETE",
       });
 
-      // 🔥 instant UI update (no need to wait)
+      // instant UI update
       setEmployees((prev) =>
         prev.filter((emp) => emp.empid !== empid)
       );
 
-      // If deleting currently edited employee → close modal
+      // close modal if needed
       if (selectedEmployee?.empid === empid) {
         closeForm();
       }
-
     } catch (error) {
       console.error("Delete failed:", error);
     }
   };
 
-  // ✅ EDIT
+  // EDIT
   const handleEdit = (emp) => {
-    setSelectedEmployee({ ...emp }); // clone to avoid mutation
+    setSelectedEmployee({ ...emp });
     setShowForm(true);
   };
 
-  // ✅ ADD
+  // ADD
   const handleAdd = () => {
     setSelectedEmployee(null);
     setShowForm(true);
   };
 
-  // ✅ CLOSE MODAL
+  // CLOSE MODAL
   const closeForm = () => {
     setShowForm(false);
     setSelectedEmployee(null);
@@ -106,6 +118,7 @@ function EmployeeDetails() {
                 <td>{emp.address}</td>
 
                 <td>
+                  {/* Edit for all */}
                   <button
                     className="edit-btn"
                     onClick={() => handleEdit(emp)}
@@ -113,12 +126,15 @@ function EmployeeDetails() {
                     Edit
                   </button>
 
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(emp.empid)}
-                  >
-                    Delete
-                  </button>
+                  {/* Delete only for admin */}
+                  {role === "admin" && (
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDelete(emp.empid)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))
@@ -130,7 +146,7 @@ function EmployeeDetails() {
         </tbody>
       </table>
 
-      {/* ✅ MODAL */}
+      {/* MODAL */}
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -141,7 +157,7 @@ function EmployeeDetails() {
             <Form
               emp={selectedEmployee}
               onUpdate={() => {
-                fetchEmployees(); // 🔥 always refresh
+                fetchEmployees();
                 closeForm();
               }}
             />

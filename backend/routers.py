@@ -72,6 +72,7 @@ async def delete_employee(empid: int):
 
 
 
+
 @router.post("/createuser")
 async def createuser(user: User, admin_key: str = None):
 
@@ -83,8 +84,7 @@ async def createuser(user: User, admin_key: str = None):
         raise HTTPException(status_code=409, detail="User already exists")
 
     user.password = hash_password(user.password)
-
-    # 🔐 Secure role assignment
+    
     if admin_key == ADMIN_SECRET:
         user.role = "admin"
     else:
@@ -113,5 +113,6 @@ async def signin(user: User):
 
     return {
         "message": "Login successful",
-        "username": existing_user.username
+        "username": existing_user.username,
+        "role": existing_user.role   
     }

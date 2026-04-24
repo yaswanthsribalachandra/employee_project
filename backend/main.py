@@ -9,12 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 async def lifespan(app: FastAPI):
     # startup
     await init_db()
-    #print("Database connected ✅")
+    #print("Database connected")
     
     yield
     
     # shutdown (optional)
-    #print("App shutting down 🔴")
+    #print("App shutting down")
 
 app = FastAPI(
     lifespan=lifespan,
