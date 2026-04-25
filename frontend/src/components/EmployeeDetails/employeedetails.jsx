@@ -2,31 +2,35 @@ import React, { useEffect, useState } from "react";
 import Form from "../form/form.jsx";
 import "./Employee.css";
 import api from "../../services/api";
-
-const BASE_URL = api.defaults.baseURL;
+import { useNavigate } from "react-router-dom";
 
 function EmployeeDetails() {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
-
-  //  ROLE STATE (important)
   const [role, setRole] = useState("");
 
+  const navigate = useNavigate();
+
+  // Load role
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
     setRole(storedRole ? storedRole.toLowerCase() : "");
-    /*console.log("ROLE:", storedRole); // 🔍 debug*/
   }, []);
 
-  // Fetch employees
+  // use axios (api) instead of fetch
   const fetchEmployees = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/employees`);
-      const data = await res.json();
-      setEmployees(data);
+      const res = await api.get("/employees"); 
+      setEmployees(res.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
+
+  
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/signin");
+      }
     }
   };
 
@@ -34,7 +38,6 @@ function EmployeeDetails() {
     fetchEmployees();
   }, []);
 
-  // DELETE (frontend control only)
   const handleDelete = async (empid) => {
     if (role !== "admin") {
       alert("Only admin can delete!");
@@ -47,16 +50,12 @@ function EmployeeDetails() {
     if (!confirmDelete) return;
 
     try {
-      await fetch(`${BASE_URL}/employees/${empid}`, {
-        method: "DELETE",
-      });
+      await api.delete(`/employees/${empid}`); 
 
-      // instant UI update
       setEmployees((prev) =>
         prev.filter((emp) => emp.empid !== empid)
       );
 
-      // close modal if needed
       if (selectedEmployee?.empid === empid) {
         closeForm();
       }
@@ -118,7 +117,6 @@ function EmployeeDetails() {
                 <td>{emp.address}</td>
 
                 <td>
-                  {/* Edit for all */}
                   <button
                     className="edit-btn"
                     onClick={() => handleEdit(emp)}
@@ -126,7 +124,6 @@ function EmployeeDetails() {
                     Edit
                   </button>
 
-                  {/* Delete only for admin */}
                   {role === "admin" && (
                     <button
                       className="delete-btn"

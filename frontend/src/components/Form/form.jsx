@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "./form.css";
-
-const BASE_URL = "http://127.0.0.1:8000";
+import api from "../../services/api"; // ✅ use axios instance
 
 function Form({ emp, onUpdate }) {
-  const isEdit = !!emp; 
+  const isEdit = !!emp;
 
   const [formData, setFormData] = useState({
     empid: "",
@@ -32,34 +31,30 @@ function Form({ emp, onUpdate }) {
     }
   }, [emp]);
 
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       if (isEdit) {
-        await fetch(`${BASE_URL}/employees/${formData.empid}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+        await api.patch(`/employees/${formData.empid}`, formData); // ✅ token auto added
       } else {
-        await fetch(`${BASE_URL}/employees`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+        await api.post(`/employees`, formData); // ✅ token auto added
       }
 
-      onUpdate(); 
+      onUpdate();
     } catch (error) {
       console.error("Error:", error);
+
+      if (error.response?.status === 401) {
+        alert("Session expired. Please login again.");
+      }
     }
   };
 
@@ -67,7 +62,6 @@ function Form({ emp, onUpdate }) {
     <form onSubmit={handleSubmit}>
       <h3>{isEdit ? "Edit Employee" : "Add Employee"}</h3>
 
-      {/* Only show ID when adding */}
       {!isEdit && (
         <input
           type="number"
@@ -138,18 +132,17 @@ function Form({ emp, onUpdate }) {
         className="update-btn"
         style={{
           padding: "10px 16px",
-          backgroundColor: isEdit ? "#28a745" : "#007bff", 
+          backgroundColor: isEdit ? "#28a745" : "#007bff",
           color: "#fff",
           border: "none",
           borderRadius: "8px",
           cursor: "pointer",
           fontSize: "15px",
           fontWeight: "500",
-          transition: "0.3s ease",
-  }}
->
-  {isEdit ? "Update" : "Add"}
-</button>
+        }}
+      >
+        {isEdit ? "Update" : "Add"}
+      </button>
     </form>
   );
 }

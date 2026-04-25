@@ -15,7 +15,6 @@ function Signin() {
 
   const [message, setMessage] = useState("");
 
-  // Handle input
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -23,7 +22,6 @@ function Signin() {
     });
   };
 
-  // Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -38,26 +36,16 @@ function Signin() {
 
       const data = await res.json();
 
-      //console.log("LOGIN RESPONSE:", data); // 🔍 DEBUG
-
       if (res.ok) {
-        if (!data.role) {
-          setMessage("Role not received from server");
-          return;
-        }
+        // ✅ FIX 1: correct token field
+        localStorage.setItem("token", data.access_token);
 
-        // Store role
+        // ✅ store role
         const role = data.role.toLowerCase().trim();
         localStorage.setItem("role", role);
 
-        // optional token
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-        }
-
         setMessage("Login successful!");
 
-        // Redirect ONLY (no reload)
         navigate("/home");
 
       } else {
