@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from  routers import router
+from routers import router
 from contextlib import asynccontextmanager
 from database import init_db
 from fastapi.middleware.cors import CORSMiddleware

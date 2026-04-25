@@ -16,4 +16,3 @@ async def init_db():
         document_models=[Employee,User]
     )
     
-    
