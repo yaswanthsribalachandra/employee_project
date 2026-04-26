@@ -10,9 +10,7 @@ async def lifespan(app: FastAPI):
     # startup
     await init_db()
     #print("Database connected")
-    
     yield
-    
     # shutdown (optional)
     #print("App shutting down")
 

@@ -8,9 +8,10 @@ from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import os
 
-
+#loading the .env file
 load_dotenv()
 
+#initializing the router
 router = APIRouter()
 
 
@@ -25,15 +26,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="signin")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
+# Functions for Password hashing and verification
 def hash_password(password: str) -> str:
+    '''Hash a password for storing.'''
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    '''Verify a stored password against one provided by user.'''
     return pwd_context.verify(plain_password, hashed_password)
 
-
+#function for creating JWT token
 def create_access_token(data: dict):
+    '''Create a JWT token with an expiration time.'''
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
@@ -41,6 +45,7 @@ def create_access_token(data: dict):
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def verify_token(token: str = Depends(oauth2_scheme)):
+    '''Verify the JWT token and return the payload.'''
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -49,6 +54,7 @@ def verify_token(token: str = Depends(oauth2_scheme)):
 
 
 async def get_current_user(payload=Depends(verify_token)):
+    '''Get the current user from the token payload.'''
     username = payload.get("sub")
     user = await User.find_one(User.username == username)
 
@@ -59,6 +65,7 @@ async def get_current_user(payload=Depends(verify_token)):
 
 
 def admin_only(payload=Depends(verify_token)):
+    '''Ensure the user is an admin.'''
     if payload.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only access")
     return payload
@@ -66,10 +73,12 @@ def admin_only(payload=Depends(verify_token)):
 
 @router.get("/employees", response_model=List[Employee])
 async def get_employees(user=Depends(get_current_user)):
+    '''Get a list of all employees.'''
     return await Employee.find().to_list()
 
 @router.post("/employees", response_model=Employee)
 async def create_employee(employee: Employee,user=Depends(get_current_user)):
+    '''Create a new employee.'''
     existing = await Employee.find_one(Employee.empid == employee.empid)
 
     if existing:
@@ -80,6 +89,7 @@ async def create_employee(employee: Employee,user=Depends(get_current_user)):
 
 @router.get("/employees/{empid}", response_model=Employee)
 async def get_employee(empid: int, user=Depends(get_current_user)):
+    '''Get a single employee by ID.'''
     employee = await Employee.find_one(Employee.empid == empid)
 
     if not employee:
@@ -89,6 +99,7 @@ async def get_employee(empid: int, user=Depends(get_current_user)):
 
 @router.patch("/employees/{empid}", response_model=Employee)
 async def update_employee(empid: int, data: Employee, user=Depends(get_current_user)):
+    '''Update an existing employee.'''
     existing = await Employee.find_one(Employee.empid == empid)
 
     if not existing:
@@ -104,6 +115,7 @@ async def update_employee(empid: int, data: Employee, user=Depends(get_current_u
 
 @router.delete("/employees/{empid}")
 async def delete_employee(empid: int, user=Depends(admin_only)):
+    '''Delete an employee by ID.'''
     employee = await Employee.find_one(Employee.empid == empid)
 
     if not employee:
@@ -115,7 +127,7 @@ async def delete_employee(empid: int, user=Depends(admin_only)):
 
 @router.post("/createuser")
 async def createuser(user: User):
-
+    '''Create a new user.'''
     if not user.username or not user.password:
         raise HTTPException(status_code=400, detail="Missing fields")
 
@@ -135,6 +147,7 @@ async def createuser(user: User):
 
 @router.post("/signin")
 async def signin(user: User):
+    '''Sign in an existing user.'''
 
     existing_user = await User.find_one(User.username == user.username)
 
@@ -154,3 +167,5 @@ async def signin(user: User):
         "token_type": "bearer",
         "role": existing_user.role
     }
+    
+#print(hash_password.__doc__)
