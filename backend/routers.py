@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from schemas import Employee, User
+from schemas import Employee, User, SalaryInput
 from typing import List
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import os
+import pickle
+import pandas as pd
 
 #loading the .env file
 load_dotenv()
@@ -26,7 +28,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="signin")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Functions for Password hashing and verification
+
 def hash_password(password: str) -> str:
     '''Hash a password for storing.'''
     return pwd_context.hash(password)
@@ -169,3 +171,58 @@ async def signin(user: User):
     }
     
 #print(hash_password.__doc__)
+
+@router.get("/ai/export-data")
+async def export_data():
+    employees = await Employee.find().to_list()
+
+    data = []
+    for emp in employees:
+        if emp.location and emp.position and emp.salary:
+            data.append({
+                "location": emp.location,
+                "position": emp.position,
+                "salary": emp.salary
+            })
+
+    return data
+
+
+MODEL_PATH = "../salary_model.pkl"
+
+# ✅ Load model once (not inside function)
+try:
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+except Exception as e:
+    model = None
+    print(f"❌ Model loading failed: {e}")
+
+
+@router.post("/ai/predict-salary")
+async def predict_salary(data: SalaryInput, user=Depends(admin_only)):
+    """
+    Predict salary based on location and position
+    """
+
+    if model is None:
+        raise HTTPException(status_code=500, detail="Model not loaded")
+
+    try:
+        # ✅ Convert input to DataFrame (important for pipeline)
+        input_df = pd.DataFrame([{
+            "location": data.location,
+            "position": data.position
+        }])
+
+        # ✅ Make prediction
+        prediction = model.predict(input_df)[0]
+
+        return {
+            "location": data.location,
+            "position": data.position,
+            "predicted_salary": round(float(prediction), 2)
+        }
+
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=str(e))

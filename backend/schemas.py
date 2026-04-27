@@ -1,6 +1,7 @@
 from beanie import Document
 from datetime import datetime
 from pydantic import Field
+from pydantic import BaseModel
 
 class Employee(Document):
     empid: int | None = None
@@ -22,3 +23,6 @@ class User(Document):
 
     class Settings:
         name = "User"
+class SalaryInput(BaseModel):
+    location: str
+    position: str

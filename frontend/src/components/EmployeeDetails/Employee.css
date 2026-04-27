@@ -146,3 +146,46 @@ tr:hover {
     opacity: 1;
   }
 }
+
+.predict-box {
+  background: #eef2f7;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.predict-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.predict-form input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  flex: 1;
+}
+
+.predict-form button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.predict-form button:hover {
+  background: #0056b3;
+}
+
+.result-box {
+  margin-top: 15px;
+  padding: 10px;
+  background: #d4edda;
+  border-radius: 8px;
+  color: #155724;
+  font-size: 16px;
+}

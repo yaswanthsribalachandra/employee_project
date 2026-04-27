@@ -10,6 +10,14 @@ function EmployeeDetails() {
   const [showForm, setShowForm] = useState(false);
   const [role, setRole] = useState("");
 
+  // 🔥 Prediction States
+  const [predictData, setPredictData] = useState({
+    location: "",
+    position: ""
+  });
+  const [predictedSalary, setPredictedSalary] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   // Load role
@@ -18,15 +26,14 @@ function EmployeeDetails() {
     setRole(storedRole ? storedRole.toLowerCase() : "");
   }, []);
 
-  // use axios (api) instead of fetch
+  // Fetch employees
   const fetchEmployees = async () => {
     try {
-      const res = await api.get("/employees"); 
+      const res = await api.get("/employees");
       setEmployees(res.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
 
-  
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
         navigate("/signin");
@@ -38,6 +45,7 @@ function EmployeeDetails() {
     fetchEmployees();
   }, []);
 
+  // DELETE
   const handleDelete = async (empid) => {
     if (role !== "admin") {
       alert("Only admin can delete!");
@@ -50,7 +58,7 @@ function EmployeeDetails() {
     if (!confirmDelete) return;
 
     try {
-      await api.delete(`/employees/${empid}`); 
+      await api.delete(`/employees/${empid}`);
 
       setEmployees((prev) =>
         prev.filter((emp) => emp.empid !== empid)
@@ -82,14 +90,80 @@ function EmployeeDetails() {
     setSelectedEmployee(null);
   };
 
+  // 🔥 PREDICT SALARY
+  const handlePredict = async () => {
+    if (!predictData.location || !predictData.position) {
+      alert("Please enter both fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await api.post("/ai/predict-salary", predictData);
+
+      setPredictedSalary(res.data.predicted_salary);
+    } catch (error) {
+      console.error("Prediction failed:", error);
+      alert("Prediction failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container">
       <h2>Employee List</h2>
 
+      {/* 🔥 ADMIN ONLY: PREDICTION PANEL */}
+      {role === "admin" && (
+        <div className="predict-box">
+          <h3> Salary Prediction</h3>
+
+          <div className="predict-form">
+            <input
+              type="text"
+              placeholder="Enter Location"
+              value={predictData.location}
+              onChange={(e) =>
+                setPredictData({
+                  ...predictData,
+                  location: e.target.value
+                })
+              }
+            />
+
+            <input
+              type="text"
+              placeholder="Enter Position"
+              value={predictData.position}
+              onChange={(e) =>
+                setPredictData({
+                  ...predictData,
+                  position: e.target.value
+                })
+              }
+            />
+
+            <button onClick={handlePredict}>
+              {loading ? "Predicting..." : "Predict"}
+            </button>
+          </div>
+
+          {predictedSalary && (
+            <div className="result-box">
+              💰 Predicted Salary: <strong>{predictedSalary}</strong>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ADD BUTTON */}
       <button className="add-btn" onClick={handleAdd}>
         Add Employee
       </button>
 
+      {/* TABLE */}
       <table>
         <thead>
           <tr>
