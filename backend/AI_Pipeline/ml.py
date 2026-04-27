@@ -1,5 +1,4 @@
-# sentiment_dict.py
-
+import streamlit as st
 import re
 
 # ----------------------------
@@ -7,12 +6,15 @@ import re
 # ----------------------------
 positive_words = {
     "good", "great", "awesome", "excellent", "amazing",
-    "happy", "love", "nice", "fantastic", "best", "positive", "enjoy", "wonderful", "delightful", "pleased", "satisfied","liked"
+    "happy", "love", "nice", "fantastic", "best",
+    "positive", "enjoy", "wonderful", "delightful",
+    "pleased", "satisfied", "liked"
 }
 
 negative_words = {
     "bad", "worst", "terrible", "awful", "hate",
-    "poor", "sad", "disappointed", "negative", "boring", "unhappy", "hate", "bad", "terrible"
+    "poor", "sad", "disappointed", "negative",
+    "boring", "unhappy"
 }
 
 # ----------------------------
@@ -21,7 +23,7 @@ negative_words = {
 def clean_text(text):
     text = text.lower()
     text = re.sub(r"[^a-z\s]", "", text)
-    return text.split()   # tokenization
+    return text.split()
 
 # ----------------------------
 # 3. Prediction Function
@@ -38,7 +40,6 @@ def predict_sentiment(text):
         elif word in negative_words:
             neg_count += 1
 
-    # Decision Logic
     if pos_count > neg_count:
         return "Positive 😊"
     elif neg_count > pos_count:
@@ -47,16 +48,24 @@ def predict_sentiment(text):
         return "Neutral 😐"
 
 # ----------------------------
-# 4. Testing Loop
+# 4. Streamlit UI
 # ----------------------------
-if __name__ == "__main__":
-    print("=== Dictionary-Based Sentiment Analysis ===")
+st.set_page_config(page_title="Sentiment Analyzer", layout="centered")
 
-    while True:
-        user_input = input("\nEnter text (or type 'exit'): ")
+st.title("💬 Sentiment Analysis App")
+st.write("Enter a sentence to analyze its sentiment (Dictionary-Based)")
 
-        if user_input.lower() == "exit":
-            break
+user_input = st.text_area("Enter your text here:")
 
+if st.button("Analyze Sentiment"):
+    if user_input.strip() == "":
+        st.warning("Please enter some text!")
+    else:
         result = predict_sentiment(user_input)
-        print("Sentiment:", result)
+
+        if "Positive" in result:
+            st.success(result)
+        elif "Negative" in result:
+            st.error(result)
+        else:
+            st.info(result)
