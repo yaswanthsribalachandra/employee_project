@@ -52,7 +52,7 @@ def predict_sentiment(text):
 # ----------------------------
 st.set_page_config(page_title="Sentiment Analyzer", layout="centered")
 
-st.title("💬 Sentiment Analysis App")
+st.title(" Sentiment Analysis App")
 st.write("Enter a sentence to analyze its sentiment (Dictionary-Based)")
 
 user_input = st.text_area("Enter your text here:")
