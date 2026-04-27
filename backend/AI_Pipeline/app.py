@@ -30,7 +30,7 @@ model.fit(X, y)
 # -------------------------------
 # STEP 3: Streamlit UI
 # -------------------------------
-st.title("🏠 House Price Prediction App")
+st.title("House Price Prediction App")
 
 st.write("Enter house details to predict price")
 
