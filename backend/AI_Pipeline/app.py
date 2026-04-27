@@ -32,7 +32,7 @@ model.fit(X, y)
 # -------------------------------
 st.title("House Price Prediction App")
 
-st.write("Enter house details to predict price")
+st.write("Enter house details to predict House price")
 
 # Inputs
 area = st.number_input("Area (sq ft)", 500, 5000, 1000)
