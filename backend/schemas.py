@@ -26,3 +26,6 @@ class User(Document):
 class SalaryInput(BaseModel):
     location: str
     position: str
+class OTPVerification(BaseModel):
+    email: str
+    otp: int

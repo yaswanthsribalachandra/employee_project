@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Signin.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import api from "../../services/api";
 
 const BASE_URL = api.defaults.baseURL;
@@ -14,6 +14,12 @@ function Signin() {
   });
 
   const [message, setMessage] = useState("");
+
+  // 🔥 Prevent access if already logged in
+  const token = localStorage.getItem("token");
+  if (token) {
+    return <Navigate to="/home" replace />;
+  }
 
   const handleChange = (e) => {
     setFormData({
@@ -37,16 +43,17 @@ function Signin() {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ FIX 1: correct token field
+        // ✅ Store token
         localStorage.setItem("token", data.access_token);
 
-        // ✅ store role
+        // ✅ Store role
         const role = data.role.toLowerCase().trim();
         localStorage.setItem("role", role);
 
         setMessage("Login successful!");
 
-        navigate("/home");
+        // 🔥 IMPORTANT FIX (prevents back navigation)
+        navigate("/home", { replace: true });
 
       } else {
         setMessage(data.detail || "Invalid credentials");
@@ -86,7 +93,7 @@ function Signin() {
         <button
           type="button"
           className="signup-btn"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/", { replace: true })}
         >
           Don't have an account? Sign Up
         </button>

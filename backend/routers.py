@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from schemas import Employee, User, SalaryInput
+from schemas import Employee, User, SalaryInput, OTPVerification
 from typing import List
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 import os
 import pickle
 import pandas as pd
+import random
+import smtplib
+from email.mime.text import MIMEText
+
 
 #loading the .env file
 load_dotenv()
@@ -16,10 +20,10 @@ load_dotenv()
 #initializing the router
 router = APIRouter()
 
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+MODEL_PATH = "../salary_model.pkl"
 
 if not SECRET_KEY:
     raise Exception("SECRET_KEY not found in .env file")
@@ -188,19 +192,19 @@ async def export_data():
     return data
 
 
-MODEL_PATH = "../salary_model.pkl"
 
-# ✅ Load model once (not inside function)
+
+#  Load model once (not inside function)
 try:
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 except Exception as e:
     model = None
-    print(f"❌ Model loading failed: {e}")
+    print(f" Model loading failed: {e}")
 
 
 @router.post("/ai/predict-salary")
-async def predict_salary(data: SalaryInput, user=Depends(admin_only)):
+async def predict_salary(data: SalaryInput,user=Depends(admin_only)):
     """
     Predict salary based on location and position
     """
@@ -209,13 +213,13 @@ async def predict_salary(data: SalaryInput, user=Depends(admin_only)):
         raise HTTPException(status_code=500, detail="Model not loaded")
 
     try:
-        # ✅ Convert input to DataFrame (important for pipeline)
+        #  Convert input to DataFrame (important for pipeline)
         input_df = pd.DataFrame([{
             "location": data.location,
             "position": data.position
         }])
 
-        # ✅ Make prediction
+        #  Make prediction
         prediction = model.predict(input_df)[0]
 
         return {
@@ -226,3 +230,52 @@ async def predict_salary(data: SalaryInput, user=Depends(admin_only)):
 
     except Exception as e:
          raise HTTPException(status_code=500, detail=str(e))
+     
+     
+
+
+def generate_otp(length=6):
+    return ''.join([str(random.randint(0, 9)) for _ in range(length)])
+
+otp = generate_otp()
+#print("Generated OTP:", otp)
+
+def send_email_otp(receiver_email, otp):
+    sender_email = "dasariyaswanthsribalachandra@gmail.com"
+    app_password = os.getenv("Emailpass")
+
+    subject = "Your Authentication Code"
+    body = f"Your One Time Password (OTP) for login : {otp}"
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, app_password)
+        server.send_message(msg) 
+        server.quit()
+        print("Email sent successfully")
+    except Exception as e:
+        print("Error:", e)
+
+# Example usage
+#send_email_otp("22331a4415@mvgrce.edu.in", otp)
+
+@router.post("/send-otp")
+def send_otp(email: str):
+    otp = generate_otp()
+    send_email_otp(email, otp)
+    return {"message": "OTP sent successfully"}
+
+''' @router.post("/verify-otp",response_model=OTPVerification)
+def verify_otp(email: str, otp: int):
+    # Implement OTP verification logic here
+    if email == recever_email and otp == generated_otp:
+        return {"message": "OTP verified successfully"}
+    else:
+        return {"message": "OTP verification failed"}
+        '''

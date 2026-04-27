@@ -1,15 +1,24 @@
 import React, { useState } from "react";
 import api from "../../services/api";
+import { useNavigate, Navigate } from "react-router-dom";
 
 const BASE_URL = api.defaults.baseURL;
 
 export default function Signup() {
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  //Password validation checks
+  // 🔐 Prevent signup if already logged in
+  const token = localStorage.getItem("token");
+  if (token) {
+    return <Navigate to="/home" replace />;
+  }
+
+  // Password validation
   const checks = {
     length: password.length >= 6,
     uppercase: /[A-Z]/.test(password),
@@ -19,14 +28,13 @@ export default function Signup() {
 
   const allValid = Object.values(checks).every(Boolean);
 
-  //Strength calculation
+  // Strength
   const strengthScore = Object.values(checks).filter(Boolean).length;
 
   const getStrength = () => {
     if (strengthScore <= 1) return { text: "Weak", color: "red" };
-    if (strengthScore === 2 || strengthScore === 3)
-      return { text: "Medium", color: "orange" };
-    if (strengthScore === 4) return { text: "Strong", color: "green" };
+    if (strengthScore <= 3) return { text: "Medium", color: "orange" };
+    return { text: "Strong", color: "green" };
   };
 
   const strength = getStrength();
@@ -57,7 +65,9 @@ export default function Signup() {
 
       if (response.ok) {
         alert("Signup successful!");
-        window.location.href = "/signin";
+
+        // 🔥 FIX: use navigate instead of window.location
+        navigate("/signin", { replace: true });
       } else {
         alert(data.detail);
       }
@@ -98,7 +108,7 @@ export default function Signup() {
           </span>
         </div>
 
-        {/*Strength Indicator */}
+        {/* Strength */}
         {password && (
           <div style={{ color: strength.color }}>
             Strength: {strength.text}
@@ -137,7 +147,7 @@ export default function Signup() {
         <button
           type="button"
           style={styles.linkButton}
-          onClick={() => (window.location.href = "/signin")}
+          onClick={() => navigate("/signin", { replace: true })}
         >
           Already have an account? Sign In
         </button>

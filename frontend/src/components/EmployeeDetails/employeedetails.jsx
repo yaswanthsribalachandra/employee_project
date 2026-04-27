@@ -10,6 +10,9 @@ function EmployeeDetails() {
   const [showForm, setShowForm] = useState(false);
   const [role, setRole] = useState("");
 
+  // 🔐 Auth check state
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
   // 🔥 Prediction States
   const [predictData, setPredictData] = useState({
     location: "",
@@ -20,13 +23,24 @@ function EmployeeDetails() {
 
   const navigate = useNavigate();
 
-  // Load role
+  // ✅ AUTH CHECK
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/signin", { replace: true });
+    } else {
+      setIsAuthChecked(true);
+    }
+  }, [navigate]);
+
+  // ✅ Load role
   useEffect(() => {
     const storedRole = localStorage.getItem("role");
     setRole(storedRole ? storedRole.toLowerCase() : "");
   }, []);
 
-  // Fetch employees
+  // ✅ Fetch employees
   const fetchEmployees = async () => {
     try {
       const res = await api.get("/employees");
@@ -36,16 +50,18 @@ function EmployeeDetails() {
 
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
-        navigate("/signin");
+        navigate("/signin", { replace: true });
       }
     }
   };
 
   useEffect(() => {
-    fetchEmployees();
-  }, []);
+    if (isAuthChecked) {
+      fetchEmployees();
+    }
+  }, [isAuthChecked]);
 
-  // DELETE
+  // ✅ DELETE
   const handleDelete = async (empid) => {
     if (role !== "admin") {
       alert("Only admin can delete!");
@@ -72,19 +88,19 @@ function EmployeeDetails() {
     }
   };
 
-  // EDIT
+  // ✅ EDIT
   const handleEdit = (emp) => {
     setSelectedEmployee({ ...emp });
     setShowForm(true);
   };
 
-  // ADD
+  // ✅ ADD
   const handleAdd = () => {
     setSelectedEmployee(null);
     setShowForm(true);
   };
 
-  // CLOSE MODAL
+  // ✅ CLOSE MODAL
   const closeForm = () => {
     setShowForm(false);
     setSelectedEmployee(null);
@@ -111,14 +127,37 @@ function EmployeeDetails() {
     }
   };
 
+  // ✅ LOGOUT WITH POPUP 🔥
+  const handleLogout = () => {
+    const confirmLogout = window.confirm(
+      "Are you sure you want to logout?"
+    );
+
+    if (!confirmLogout) return;
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+
+    navigate("/signin", { replace: true });
+  };
+
+  // ⛔ Prevent UI flicker
+  if (!isAuthChecked) return null;
+
   return (
     <div className="container">
+
+      {/* 🔥 Top Right Logout */}
+      <div className="top-right">
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+
       <h2>Employee List</h2>
 
-      {/* 🔥 ADMIN ONLY: PREDICTION PANEL */}
+      {/* 🔥 ADMIN ONLY: PREDICTION */}
       {role === "admin" && (
         <div className="predict-box">
-          <h3> Salary Prediction</h3>
+          <h3>Salary Prediction</h3>
 
           <div className="predict-form">
             <input
