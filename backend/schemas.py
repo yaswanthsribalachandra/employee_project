@@ -19,7 +19,9 @@ class User(Document):
     username: str | None = None
     role: str | None = None
     password: str | None = None
-    
+    # ✅ OTP fields
+    otp: int | None = None
+    otp_expiry: datetime | None = None
 
     class Settings:
         name = "User"
@@ -29,3 +31,7 @@ class SalaryInput(BaseModel):
 class OTPVerification(BaseModel):
     email: str
     otp: int
+    
+class ResetPassword(BaseModel):
+    email: str
+    new_password: str

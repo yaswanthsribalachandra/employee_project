@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from schemas import Employee, User, SalaryInput, OTPVerification
+from schemas import Employee, User, SalaryInput, OTPVerification,ResetPassword
 from typing import List
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -233,16 +233,16 @@ async def predict_salary(data: SalaryInput,user=Depends(admin_only)):
      
      
 
-
 def generate_otp(length=6):
     return ''.join([str(random.randint(0, 9)) for _ in range(length)])
 
-otp = generate_otp()
-#print("Generated OTP:", otp)
 
+# ----------------------------
+# EMAIL SENDER
+# ----------------------------
 def send_email_otp(receiver_email, otp):
     sender_email = "dasariyaswanthsribalachandra@gmail.com"
-    app_password = os.getenv("Emailpass")
+    app_password = os.getenv("EMAIL_PASS")
 
     subject = "Your Authentication Code"
     body = f"Your One Time Password (OTP) for login : {otp}"
@@ -256,26 +256,88 @@ def send_email_otp(receiver_email, otp):
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.starttls()
         server.login(sender_email, app_password)
-        server.send_message(msg) 
+        server.send_message(msg)
         server.quit()
         print("Email sent successfully")
     except Exception as e:
         print("Error:", e)
 
-# Example usage
-#send_email_otp("22331a4415@mvgrce.edu.in", otp)
 
-@router.post("/send-otp")
-def send_otp(email: str):
-    otp = generate_otp()
+# ----------------------------
+# SEND OTP
+# ----------------------------
+@router.post("/forgot-password")
+async def send_otp(email: str):
+
+    user = await User.find_one({"username": email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    otp = int(generate_otp())
+    expiry_time = datetime.utcnow() + timedelta(minutes=5)
+
+    # ✅ Save OTP in user
+    user.otp = otp
+    user.otp_expiry = expiry_time
+    await user.save()
+
     send_email_otp(email, otp)
+
     return {"message": "OTP sent successfully"}
 
-''' @router.post("/verify-otp",response_model=OTPVerification)
-def verify_otp(email: str, otp: int):
-    # Implement OTP verification logic here
-    if email == recever_email and otp == generated_otp:
-        return {"message": "OTP verified successfully"}
-    else:
-        return {"message": "OTP verification failed"}
-        '''
+
+# ----------------------------
+# VERIFY OTP
+# ----------------------------
+@router.post("/verify-reset-otp")
+async def verify_otp(data: OTPVerification):
+
+    user = await User.find_one({"username": data.email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.otp:
+        raise HTTPException(status_code=400, detail="OTP not generated")
+
+    # ❗ expiry check
+    if datetime.utcnow() > user.otp_expiry:
+        user.otp = None
+        user.otp_expiry = None
+        await user.save()
+        raise HTTPException(status_code=400, detail="OTP expired")
+
+    # ❗ match OTP
+    if user.otp != data.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    # ✅ success → clear OTP
+    '''user.otp = None
+    user.otp_expiry = None
+    await user.save()'''
+
+    return {"message": "OTP verified successfully"}
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPassword):
+
+    user = await User.find_one({"username": data.email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # ❌ Prevent same password reuse
+    if verify_password(data.new_password, user.password):
+        raise HTTPException(status_code=400, detail="New password must be different from old password")
+
+    # ✅ Hash and overwrite password
+    user.password = hash_password(data.new_password)
+
+    # clear OTP (optional if not needed here)
+    #user.otp = None
+    #user.otp_expiry = None
+
+    await user.save()
+
+    return {"message": "Password updated successfully"}
