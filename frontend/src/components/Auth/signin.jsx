@@ -20,6 +20,27 @@ function Signin() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+
+  const checks = {
+  length: newPassword.length >= 6,
+  uppercase: /[A-Z]/.test(newPassword),
+  number: /[0-9]/.test(newPassword),
+  special: /[^A-Za-z0-9]/.test(newPassword),
+};
+
+const allValid = Object.values(checks).every(Boolean);
+
+const strengthScore = Object.values(checks).filter(Boolean).length;
+
+const getStrength = () => {
+  if (strengthScore <= 1) return { text: "Weak", color: "red" };
+  if (strengthScore <= 3) return { text: "Medium", color: "orange" };
+  return { text: "Strong", color: "green" };
+};
 
   // 🔐 Prevent access if already logged in
   const token = localStorage.getItem("token");
@@ -149,7 +170,7 @@ function Signin() {
           <input
             type="text"
             name="username"
-            placeholder="Enter Email"
+            placeholder="Enter Username"
             value={formData.username}
             onChange={handleChange}
             required
@@ -224,21 +245,77 @@ function Signin() {
       )}
 
       {/* ---------------- RESET PASSWORD ---------------- */}
-      {step === "reset" && (
-        <div className="signin-form">
-          <h2>Reset Password</h2>
+{step === "reset" && (
+  <div className="signin-form">
+    <h2>Reset Password</h2>
 
-          <input
-            type="password"
-            placeholder="Enter new password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
+    {/* New Password */}
+    <div style={{ position: "relative" }}>
+      <input
+        type={showPassword ? "text" : "password"}
+        placeholder="Enter new password"
+        value={newPassword}
+        onChange={(e) => setNewPassword(e.target.value)}
+      />
+      <span
+        onClick={() => setShowPassword(!showPassword)}
+        style={{ position: "absolute", right: 70, top: 10, cursor: "pointer" }}
+      >
+        {showPassword ? "🔓" : "🔒"}
+      </span>
+    </div>
 
-          <button onClick={resetPassword}>Update Password</button>
-        </div>
-      )}
+    {/* Confirm Password */}
+    <div style={{ position: "relative", marginTop: "10px" }}>
+      <input
+        type={showConfirm ? "text" : "password"}
+        placeholder="Confirm password"
+        value={confirmPassword}
+        onChange={(e) => setConfirmPassword(e.target.value)}
+      />
+      <span
+        onClick={() => setShowConfirm(!showConfirm)}
+        style={{ position: "absolute", right: 70, top: 10, cursor: "pointer" }}
+      >
+        {showConfirm ? "🔓" : "🔒"}
+      </span>
+    </div>
+
+    {/* Strength */}
+    <p style={{ color: getStrength().color }}>
+      Strength: {getStrength().text}
+    </p>
+
+    {/* Validation */}
+    <ul style={{ fontSize: "12px", textAlign: "left" }}>
+      <li style={{ color: checks.length ? "green" : "red" }}>
+        At least 6 characters
+      </li>
+      <li style={{ color: checks.uppercase ? "green" : "red" }}>
+        One uppercase letter
+      </li>
+      <li style={{ color: checks.number ? "green" : "red" }}>
+        One number
+      </li>
+      <li style={{ color: checks.special ? "green" : "red" }}>
+        One special character
+      </li>
+    </ul>
+
+    {/* Match check */}
+    {confirmPassword && newPassword !== confirmPassword && (
+      <p style={{ color: "red" }}>Passwords do not match</p>
+    )}
+
+    {/* Submit */}
+    <button
+      onClick={resetPassword}
+      disabled={!allValid || newPassword !== confirmPassword}
+    >
+      Update Password
+    </button>
+  </div>
+  )}
     </div>
   );
 }

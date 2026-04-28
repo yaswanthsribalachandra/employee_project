@@ -244,8 +244,8 @@ def send_email_otp(receiver_email, otp):
     sender_email = "dasariyaswanthsribalachandra@gmail.com"
     app_password = os.getenv("EMAIL_PASS")
 
-    subject = "Your Authentication Code"
-    body = f"Your One Time Password (OTP) for login : {otp}"
+    subject = "Password Reset Verification Code"
+    body = f"Dear User,\n\nYour One-Time Password (OTP) for resetting your password is **{otp}**. This code is valid for 5 minutes.\n\nFor security reasons, please do not share this OTP with anyone.\n\nRegards,\nSupport Team"
 
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -254,6 +254,8 @@ def send_email_otp(receiver_email, otp):
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
+        #server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+
         server.starttls()
         server.login(sender_email, app_password)
         server.send_message(msg)
@@ -272,7 +274,7 @@ async def send_otp(email: str):
     user = await User.find_one({"username": email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found. Sign up first.")
 
     otp = int(generate_otp())
     expiry_time = datetime.utcnow() + timedelta(minutes=5)
