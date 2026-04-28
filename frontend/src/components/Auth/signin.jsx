@@ -209,23 +209,43 @@ const getStrength = () => {
       )}
 
       {/* ---------------- FORGOT EMAIL ---------------- */}
-      {step === "forgot" && (
-        <div className="signin-form">
-          <h2>Forgot Password</h2>
+     {step === "forgot" && (
+  <div className="signin-form">
+    <h2>Forgot Password</h2>
 
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+    <input
+      type="email"
+      placeholder="Enter your email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      required
+      pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+      title="Enter a valid email address"
+    />
 
-          <button onClick={sendResetOtp}>Send OTP</button>
+    <button
+      onClick={() => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-          <button onClick={() => setStep("login")}>Back</button>
-        </div>
-      )}
+        if (!email) {
+          alert("Email is required");
+          return;
+        }
+
+        if (!emailRegex.test(email)) {
+          alert("Please enter a valid email address");
+          return;
+        }
+
+        sendResetOtp(); // call API only if valid
+      }}
+    >
+      Send OTP
+    </button>
+
+    <button onClick={() => setStep("login")}>Back</button>
+  </div>
+  )}
 
       {/* ---------------- OTP ---------------- */}
       {step === "otp" && (
@@ -259,7 +279,7 @@ const getStrength = () => {
       />
       <span
         onClick={() => setShowPassword(!showPassword)}
-        style={{ position: "absolute", right: 70, top: 10, cursor: "pointer" }}
+        style={{ position: "absolute", right: 80, top: 10, cursor: "pointer" }}
       >
         {showPassword ? "🔓" : "🔒"}
       </span>
@@ -275,7 +295,7 @@ const getStrength = () => {
       />
       <span
         onClick={() => setShowConfirm(!showConfirm)}
-        style={{ position: "absolute", right: 70, top: 10, cursor: "pointer" }}
+        style={{ position: "absolute", right: 80, top: 10, cursor: "pointer" }}
       >
         {showConfirm ? "🔓" : "🔒"}
       </span>
