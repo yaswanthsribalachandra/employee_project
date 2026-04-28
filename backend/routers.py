@@ -77,10 +77,11 @@ def admin_only(payload=Depends(verify_token)):
     return payload
 
 
-@router.get("/employees", response_model=List[Employee])
-async def get_employees(user=Depends(get_current_user)):
-    '''Get a list of all employees.'''
-    return await Employee.find().to_list()
+@router.get("/employees")
+async def get_employees(page: int = 1, limit: int = 10):
+    skip = (page - 1) * limit
+    return await Employee.find().skip(skip).limit(limit).to_list()
+
 
 @router.post("/employees", response_model=Employee)
 async def create_employee(employee: Employee,user=Depends(get_current_user)):

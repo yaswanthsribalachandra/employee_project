@@ -9,6 +9,9 @@ function EmployeeDetails() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [role, setRole] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // 🔐 Auth check state
   const [isAuthChecked, setIsAuthChecked] = useState(false);
@@ -41,20 +44,50 @@ function EmployeeDetails() {
   }, []);
 
   // ✅ Fetch employees
-  const fetchEmployees = async () => {
-    try {
-      const res = await api.get("/employees");
-      setEmployees(res.data);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
+  const fetchEmployees = async (pageNum = 1) => {
+  try {
+    setLoadingMore(true);
 
-      if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        navigate("/signin", { replace: true });
-      }
+    const res = await api.get(`/employees?page=${pageNum}&limit=10`);
+
+    if (pageNum === 1) {
+      setEmployees(res.data);
+    } else {
+      setEmployees((prev) => [...prev, ...res.data]); // ✅ APPEND
+    }
+
+    if (res.data.length < 10) {
+      setHasMore(false); // no more data
+    }
+
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+  } finally {
+    setLoadingMore(false);
+  }
+};
+useEffect(() => {
+  if (isAuthChecked) {
+    fetchEmployees(1);
+  }
+}, [isAuthChecked]);
+useEffect(() => {
+  const handleScroll = () => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop + 50 >=
+      document.documentElement.scrollHeight &&
+      !loadingMore &&
+      hasMore
+    ) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchEmployees(nextPage);
     }
   };
 
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, [page, loadingMore, hasMore]);
   useEffect(() => {
     if (isAuthChecked) {
       fetchEmployees();
