@@ -8,22 +8,20 @@ const BASE_URL = api.defaults.baseURL;
 function Signin() {
   const navigate = useNavigate();
 
+  const [step, setStep] = useState("login");
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
 
-  const [message, setMessage] = useState("");
-
-  // ✅ Forgot password states
-  const [step, setStep] = useState("login"); // login | forgot | otp | reset
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [message, setMessage] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
 
   const checks = {
   length: newPassword.length >= 6,
@@ -44,27 +42,16 @@ const getStrength = () => {
 
   // 🔐 Prevent access if already logged in
   const token = localStorage.getItem("token");
-  if (token) {
-    return <Navigate to="/home" replace />;
-  }
+  if (token) return <Navigate to="/home" replace />;
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // ---------------- LOGIN ----------------
+  // ---------------- PASSWORD LOGIN ----------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const res = await fetch(`${BASE_URL}/signin`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -72,68 +59,115 @@ const getStrength = () => {
 
       if (res.ok) {
         localStorage.setItem("token", data.access_token);
-        localStorage.setItem("role", data.role.toLowerCase().trim());
         navigate("/home", { replace: true });
       } else {
         setMessage(data.detail || "Invalid credentials");
       }
-    } catch (error) {
-      setMessage("⚠️ Server error");
+    } catch {
+      setMessage("Server error");
     }
   };
 
-  // ---------------- SEND RESET OTP ----------------
-  const sendResetOtp = async () => {
+  // ---------------- LOGIN WITH OTP ----------------
+  const sendLoginOtp = async () => {
+    if (!email) return alert("Enter email");
+
     try {
       const res = await fetch(
-        `${BASE_URL}/forgot-password?email=${encodeURIComponent(email)}`,
-        {
-          method: "POST",
-        }
+        `${BASE_URL}/login-otp?email=${encodeURIComponent(email)}`,
+        { method: "POST" }
       );
 
       const data = await res.json();
 
       if (res.ok) {
-        alert("OTP sent to email");
-        setStep("otp");
+        alert("OTP sent");
+        setStep("otpVerify");
       } else {
         alert(data.detail);
       }
-    } catch (err) {
+    } catch {
       alert("Error sending OTP");
     }
   };
 
-  // ---------------- VERIFY OTP ----------------
-  const verifyOtp = async () => {
+  const verifyLoginOtp = async () => {
+    if (!otp) return alert("Enter OTP");
+
+    try {
+      const res = await fetch(`${BASE_URL}/verify-login-otp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp: parseInt(otp) }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.access_token);
+        navigate("/home", { replace: true });
+      } else {
+        alert(data.detail);
+      }
+    } catch {
+      alert("OTP verification failed");
+    }
+  };
+
+  // ---------------- FORGOT PASSWORD ----------------
+  const sendResetOtp = async () => {
+    if (!email) return alert("Enter email");
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/forgot-password?email=${encodeURIComponent(email)}`,
+        { method: "POST" }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("OTP sent");
+        setStep("otpResetVerify");
+      } else {
+        alert(data.detail);
+      }
+    } catch {
+      alert("Error sending OTP");
+    }
+  };
+
+  const verifyResetOtp = async () => {
+    if (!otp) return alert("Enter OTP");
+
     try {
       const res = await fetch(`${BASE_URL}/verify-reset-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email: email,
-          otp: parseInt(otp),
-        }),
+        body: JSON.stringify({ email, otp: parseInt(otp) }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        alert("OTP verified!");
         setStep("reset");
       } else {
         alert(data.detail);
       }
-    } catch (err) {
+    } catch {
       alert("Error verifying OTP");
     }
   };
 
-  // ---------------- RESET PASSWORD ----------------
   const resetPassword = async () => {
+    if (newPassword !== confirmPassword) {
+      return alert("Passwords do not match");
+    }
+
     try {
       const res = await fetch(`${BASE_URL}/reset-password`, {
         method: "POST",
@@ -141,7 +175,7 @@ const getStrength = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
+          email,
           new_password: newPassword,
         }),
       });
@@ -149,12 +183,12 @@ const getStrength = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Password reset successful!");
+        alert("Password updated successfully");
         setStep("login");
       } else {
         alert(data.detail);
       }
-    } catch (err) {
+    } catch {
       alert("Error resetting password");
     }
   };
@@ -170,32 +204,34 @@ const getStrength = () => {
           <input
             type="text"
             name="username"
-            placeholder="Enter Username"
-            value={formData.username}
-            onChange={handleChange}
+            placeholder="Username"
+            onChange={(e) =>
+              setFormData({ ...formData, username: e.target.value })
+            }
             required
           />
 
           <input
             type="password"
             name="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={handleChange}
+            placeholder="Password"
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
             required
           />
 
           <button type="submit">Login</button>
 
-          {/* ✅ Forgot Password */}
-          <button
-            type="button"
-            className="signup-btn"
-            onClick={() => setStep("forgot")}
-          >
-            Forgot Password?
+          <button type="button" onClick={() => setStep("otpLogin")}>
+            Login with OTP
           </button>
 
+          <button type="button" onClick={() => setStep("forgot")}>
+            Forgot Password
+          </button>
+
+          {/* 🔥 SIGNUP REDIRECT */}
           <button
             type="button"
             className="signup-btn"
@@ -208,64 +244,69 @@ const getStrength = () => {
         </form>
       )}
 
-      {/* ---------------- FORGOT EMAIL ---------------- */}
-     {step === "forgot" && (
-  <div className="signin-form">
-    <h2>Forgot Password</h2>
+      {/* ---------------- OTP LOGIN ---------------- */}
+      {step === "otpLogin" && (
+        <div className="signin-form">
+          <h2>Login with OTP</h2>
 
-    <input
-      type="email"
-      placeholder="Enter your email"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      required
-      pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
-      title="Enter a valid email address"
-    />
+          <input
+            type="email"
+            placeholder="Enter email"
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-    <button
-      onClick={() => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          <button onClick={sendLoginOtp}>Send OTP</button>
+          <button onClick={() => setStep("login")}>Back</button>
+        </div>
+      )}
 
-        if (!email) {
-          alert("Email is required");
-          return;
-        }
+      {/* ---------------- OTP VERIFY ---------------- */}
+      {step === "otpVerify" && (
+        <div className="signin-form">
+          <h2>Enter OTP</h2>
 
-        if (!emailRegex.test(email)) {
-          alert("Please enter a valid email address");
-          return;
-        }
+          <input
+            type="number"
+            placeholder="OTP"
+            onChange={(e) => setOtp(e.target.value)}
+          />
 
-        sendResetOtp(); // call API only if valid
-      }}
-    >
-      Send OTP
-    </button>
+          <button onClick={verifyLoginOtp}>Verify & Login</button>
+        </div>
+      )}
 
-    <button onClick={() => setStep("login")}>Back</button>
-  </div>
-  )}
+      {/* ---------------- FORGOT PASSWORD ---------------- */}
+      {step === "forgot" && (
+        <div className="signin-form">
+          <h2>Forgot Password</h2>
 
-      {/* ---------------- OTP ---------------- */}
-      {step === "otp" && (
+          <input
+            type="email"
+            placeholder="Enter email"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <button onClick={sendResetOtp}>Send OTP</button>
+          <button onClick={() => setStep("login")}>Back</button>
+        </div>
+      )}
+
+      {/* ---------------- VERIFY RESET OTP ---------------- */}
+      {step === "otpResetVerify" && (
         <div className="signin-form">
           <h2>Verify OTP</h2>
 
           <input
             type="number"
-            placeholder="Enter OTP"
-            value={otp}
+            placeholder="OTP"
             onChange={(e) => setOtp(e.target.value)}
-            required
           />
 
-          <button onClick={verifyOtp}>Verify</button>
+          <button onClick={verifyResetOtp}>Verify</button>
         </div>
       )}
 
-      {/* ---------------- RESET PASSWORD ---------------- */}
-{step === "reset" && (
+      {step === "reset" && (
   <div className="signin-form">
     <h2>Reset Password</h2>
 

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from schemas import Employee, User, SalaryInput, OTPVerification,ResetPassword
+from schemas import Employee, User, SalaryInput, OTPVerification,ResetPassword,LoginOTPVerification
 from typing import List
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -240,12 +240,22 @@ def generate_otp(length=6):
 # ----------------------------
 # EMAIL SENDER
 # ----------------------------
-def send_email_otp(receiver_email, otp):
+def send_email_otp(receiver_email, otp, purpose):
     sender_email = "dasariyaswanthsribalachandra@gmail.com"
     app_password = os.getenv("EMAIL_PASS")
+    subject = f"{purpose} Verification Code"
+    body = f"""
+        Dear User,
 
-    subject = "Password Reset Verification Code"
-    body = f"Dear User,\n\nYour One-Time Password (OTP) for resetting your password is **{otp}**. This code is valid for 5 minutes.\n\nFor security reasons, please do not share this OTP with anyone.\n\nRegards,\nSupport Team"
+        Your One-Time Password (OTP) for {purpose.lower()} is: {otp}.
+
+        This OTP is valid for 5 minutes. Please do not share it with anyone for security reasons.
+
+        If you did not request this, please ignore this email.
+
+        Regards,  
+        Support Team
+        """
 
     msg = MIMEText(body)
     msg['Subject'] = subject
@@ -284,7 +294,7 @@ async def send_otp(email: str):
     user.otp_expiry = expiry_time
     await user.save()
 
-    send_email_otp(email, otp)
+    send_email_otp(email, otp, "Password Reset")
 
     return {"message": "OTP sent successfully"}
 
@@ -298,7 +308,7 @@ async def verify_otp(data: OTPVerification):
     user = await User.find_one({"username": data.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found. Sign up first.")
 
     if not user.otp:
         raise HTTPException(status_code=400, detail="OTP not generated")
@@ -327,7 +337,7 @@ async def reset_password(data: ResetPassword):
     user = await User.find_one({"username": data.email})
 
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found. Sign up first.")
 
     # ❌ Prevent same password reuse
     if verify_password(data.new_password, user.password):
@@ -343,3 +353,60 @@ async def reset_password(data: ResetPassword):
     await user.save()
 
     return {"message": "Password updated successfully"}
+
+@router.post("/verify-login-otp")
+async def verify_login_otp(data: LoginOTPVerification):
+
+    user = await User.find_one({"username": data.email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found. Signup First.")
+
+    if not user.login_otp:
+        raise HTTPException(status_code=400, detail="OTP not generated")
+
+    # expiry check
+    if datetime.utcnow() > user.login_otp_expiry:
+        user.login_otp = None
+        user.login_otp_expiry = None
+        await user.save()
+        raise HTTPException(status_code=400, detail="OTP expired")
+
+    # match
+    if user.login_otp != data.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    # clear OTP
+    user.login_otp = None
+    user.login_otp_expiry = None
+    await user.save()
+
+    # generate token
+    token = create_access_token({
+        "sub": user.username,
+        "role": user.role
+    })
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "role": user.role
+    }
+@router.post("/login-otp")
+async def login_with_otp(email: str):
+
+    user = await User.find_one({"username": email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found . Sign up first.")
+
+    otp = int(generate_otp())
+    expiry_time = datetime.utcnow() + timedelta(minutes=5)
+
+    user.login_otp = otp
+    user.login_otp_expiry = expiry_time
+    await user.save()
+
+    send_email_otp(email, otp, "Login")
+
+    return {"message": "Login OTP sent"}

@@ -1,3 +1,4 @@
+from pyparsing import Optional
 from beanie import Document
 from datetime import datetime
 from pydantic import Field
@@ -22,6 +23,8 @@ class User(Document):
     # ✅ OTP fields
     otp: int | None = None
     otp_expiry: datetime | None = None
+    login_otp: int | None = None
+    login_otp_expiry: datetime | None = None
 
     class Settings:
         name = "User"
@@ -35,3 +38,7 @@ class OTPVerification(BaseModel):
 class ResetPassword(BaseModel):
     email: str
     new_password: str
+    
+class LoginOTPVerification(BaseModel):
+    email: str
+    otp: int
